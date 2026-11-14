@@ -1,12 +1,12 @@
-// ✅ DATOS DE TU PROYECTO SUPABASE
+// 🔑 Datos de tu proyecto Supabase — tal como los dio tu profesor
 const SUPABASE_URL = "https://hypxybgvxvpwfqflijty.supabase.co";
 const SUPABASE_KEY = "sb_publishable_x6A2XiGzM9F2Qlk9xwBUvA_UK3HoJJz";
 
-// Inicializar conexión
+// Inicializar conexión con la base de datos
 const { createClient } = supabase;
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// Elementos del DOM
+// Elementos del formulario
 const emailInput = document.getElementById('email');
 const passInput = document.getElementById('pass');
 const btnEntrar = document.getElementById('btnEntrar');
@@ -19,39 +19,36 @@ const usuarioMostrado = document.getElementById('usuarioMostrado');
 // Eventos
 btnEntrar.addEventListener('click', iniciarSesion);
 btnSalir.addEventListener('click', cerrarSesion);
-document.addEventListener('keydown', function(e) {
+document.addEventListener('keydown', e => {
     if (e.key === 'Enter') iniciarSesion();
 });
 
-// Mostrar mensajes
+// Mostrar mensajes en pantalla
 function mostrarMensaje(texto, tipo) {
     mensaje.textContent = texto;
     mensaje.className = `mensaje ${tipo}`;
     mensaje.style.display = 'block';
 }
 
-// Función para iniciar sesión
+// Función para iniciar sesión — consulta a la base de datos
 async function iniciarSesion() {
     const email = emailInput.value.trim();
     const password = passInput.value;
-
-    // Ocultar mensaje anterior
+    
     mensaje.style.display = 'none';
-    mensaje.className = 'mensaje';
 
-    // Validar campos vacíos
+    // Validar que no queden campos vacíos
     if (!email || !password) {
         mostrarMensaje("⚠️ Completa todos los campos", "error");
         return;
     }
 
-    // Estado de carga
+    // Conectar y validar contra la base de datos
     btnEntrar.disabled = true;
     btnEntrar.textContent = "Conectando...";
-    mostrarMensaje("🔄 Conectando a la base de datos...", "cargando");
 
     try {
-        // 📡 CONECTAR CON SUPABASE
+        // 📡 CONSULTA REAL A SUPABASE
         const { data, error } = await supabase.auth.signInWithPassword({
             email: email,
             password: password
@@ -59,36 +56,34 @@ async function iniciarSesion() {
 
         if (error) throw error;
 
-        // ✅ INICIO EXITOSO
+        // ✅ Usuario existe y es correcto
         formLogin.style.display = 'none';
         paginaBienvenida.style.display = 'block';
         usuarioMostrado.textContent = email;
 
     } catch (err) {
-        // ❌ MANEJO DE ERRORES
-        let texto = "❌ Usuario o contraseña incorrectos";
+        // ❌ Usuario no existe o contraseña incorrecta
+        let textoError = "❌ Usuario o contraseña inválidos";
         
         if (err.message.includes("Invalid login credentials")) {
-            texto = "❌ Usuario o contraseña incorrectos";
+            textoError = "❌ Usuario o contraseña incorrectos";
         } else if (err.message.includes("fetch") || err.message.includes("network")) {
-            texto = "⚠️ No se pudo conectar a Supabase. Verifica tu internet o la URL.";
-        } else if (err.message) {
-            texto = "❌ Error: " + err.message;
+            textoError = "⚠️ No se pudo conectar a la base de datos";
         }
-
-        mostrarMensaje(texto, "error");
+        
+        mostrarMensaje(textoError, "error");
     } finally {
         btnEntrar.disabled = false;
         btnEntrar.textContent = "Entrar";
     }
 }
 
-// Función para cerrar sesión
+// Cerrar sesión
 async function cerrarSesion() {
     await supabase.auth.signOut();
     paginaBienvenida.style.display = 'none';
     formLogin.style.display = 'block';
+    emailInput.value = '';
+    passInput.value = '';
     mensaje.style.display = 'none';
-    emailInput.value = 'cehg@aunar.com';
-    passInput.value = 'aunar123';
 }
