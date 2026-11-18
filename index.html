@@ -5,31 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Iniciar Sesión</title>
     <link rel="stylesheet" href="estilo.css">
-    <!-- Cargar el SDK de Supabase desde CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
 <body>
     <div class="contenedor">
         <h2>Iniciar Sesión</h2>
-        
         <form id="formLogin">
             <div class="campo">
-                <label for="usuario">Usuario:</label>
+                <label>Usuario:</label>
                 <input type="text" id="usuario" required>
             </div>
-            
             <div class="campo">
-                <label for="contrasena">Contraseña:</label>
+                <label>Contraseña:</label>
                 <input type="password" id="contrasena" required>
             </div>
-            
             <button type="submit">Ingresar</button>
         </form>
-
-        <!-- Mensaje de respuesta -->
         <p id="mensaje"></p>
     </div>
-
     <script src="app.js"></script>
 </body>
 </html>
