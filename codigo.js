@@ -1,89 +1,89 @@
-// 🔑 Datos de tu proyecto Supabase — tal como los dio tu profesor
+// Configuración de Supabase
 const SUPABASE_URL = "https://hypxybgvxvpwfqflijty.supabase.co";
 const SUPABASE_KEY = "sb_publishable_x6A2XiGzM9F2Qlk9xwBUvA_UK3HoJJz";
 
-// Inicializar conexión con la base de datos
+// Inicializar cliente
 const { createClient } = supabase;
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// Elementos del formulario
-const emailInput = document.getElementById('email');
-const passInput = document.getElementById('pass');
-const btnEntrar = document.getElementById('btnEntrar');
-const btnSalir = document.getElementById('btnSalir');
-const mensaje = document.getElementById('mensaje');
+// Elementos del DOM
 const formLogin = document.getElementById('formLogin');
-const paginaBienvenida = document.getElementById('paginaBienvenida');
-const usuarioMostrado = document.getElementById('usuarioMostrado');
+const usuarioInput = document.getElementById('usuario');
+const contrasenaInput = document.getElementById('contrasena');
+const mensaje = document.getElementById('mensaje');
 
-// Eventos
-btnEntrar.addEventListener('click', iniciarSesion);
-btnSalir.addEventListener('click', cerrarSesion);
-document.addEventListener('keydown', e => {
-    if (e.key === 'Enter') iniciarSesion();
+// Manejar envío del formulario
+formLogin.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const usuario = usuarioInput.value.trim();
+    const contrasena = contrasenaInput.value;
+    
+    mensaje.textContent = '';
+    mensaje.className = '';
+
+    try {
+        // 🔑 Opción A: Usar función de Supabase (como te mostró el profe)
+        const { data, error } = await supabase.functions.invoke('login-aunar', {
+            body: { usuario, contrasena }
+        });
+
+        if (error) {
+            throw error;
+        }
+
+        procesarRespuesta(data);
+
+    } catch (err) {
+        // 🔑 Opción B: Consulta directa a tabla (si la función no está lista)
+        console.log("Usando consulta directa como respaldo...");
+        await verificarUsuarioDirecto(usuario, contrasena);
+    }
 });
 
-// Mostrar mensajes en pantalla
-function mostrarMensaje(texto, tipo) {
-    mensaje.textContent = texto;
-    mensaje.className = `mensaje ${tipo}`;
-    mensaje.style.display = 'block';
+// Procesar respuesta de la función
+function procesarRespuesta(data) {
+    if (data.existe) {
+        mostrarExito(data.mensaje || "¡Bienvenido, " + data.usuario + "!");
+    } else {
+        mostrarError(data.mensaje || "Usuario inválido");
+    }
 }
 
-// Función para iniciar sesión — consulta a la base de datos
-async function iniciarSesion() {
-    const email = emailInput.value.trim();
-    const password = passInput.value;
-    
-    mensaje.style.display = 'none';
+// Verificación directa a la base de datos (plan B)
+async function verificarUsuarioDirecto(usuario, contrasena) {
+    // ⚠️ IMPORTANTE: En producción NO guardes contraseñas en texto plano
+    // Este ejemplo es para fines educativos
+    const { data, error } = await supabase
+        .from('usuarios')
+        .select('*')
+        .eq('usuario', usuario)
+        .single();
 
-    // Validar que no queden campos vacíos
-    if (!email || !password) {
-        mostrarMensaje("⚠️ Completa todos los campos", "error");
+    if (error) {
+        mostrarError("Usuario inválido ❌");
         return;
     }
 
-    // Conectar y validar contra la base de datos
-    btnEntrar.disabled = true;
-    btnEntrar.textContent = "Conectando...";
-
-    try {
-        // 📡 CONSULTA REAL A SUPABASE
-        const { data, error } = await supabase.auth.signInWithPassword({
-            email: email,
-            password: password
-        });
-
-        if (error) throw error;
-
-        // ✅ Usuario existe y es correcto
-        formLogin.style.display = 'none';
-        paginaBienvenida.style.display = 'block';
-        usuarioMostrado.textContent = email;
-
-    } catch (err) {
-        // ❌ Usuario no existe o contraseña incorrecta
-        let textoError = "❌ Usuario o contraseña inválidos";
-        
-        if (err.message.includes("Invalid login credentials")) {
-            textoError = "❌ Usuario o contraseña incorrectos";
-        } else if (err.message.includes("fetch") || err.message.includes("network")) {
-            textoError = "⚠️ No se pudo conectar a la base de datos";
-        }
-        
-        mostrarMensaje(textoError, "error");
-    } finally {
-        btnEntrar.disabled = false;
-        btnEntrar.textContent = "Entrar";
+    if (data && data.contrasena === contrasena) {
+        mostrarExito(`¡Bienvenido, ${usuario}! ✅`);
+    } else {
+        mostrarError("Contraseña incorrecta ❌");
     }
 }
 
-// Cerrar sesión
-async function cerrarSesion() {
-    await supabase.auth.signOut();
-    paginaBienvenida.style.display = 'none';
-    formLogin.style.display = 'block';
-    emailInput.value = '';
-    passInput.value = '';
-    mensaje.style.display = 'none';
+function mostrarError(texto) {
+    mensaje.textContent = texto;
+    mensaje.className = 'error';
+}
+
+function mostrarExito(texto) {
+    mensaje.textContent = texto;
+    mensaje.className = 'exito';
+    
+    // Redirigir a página de bienvenida después de 1.5 segundos
+    setTimeout(() => {
+        alert("¡Ingresando al sistema! 🎉");
+        // window.location.href = "bienvenida.html"; // Descomenta si creas esa página
+    }, 1500);
 }
